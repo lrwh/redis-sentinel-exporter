@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.lrwh</groupId>
     <artifactId>redis-sentinel-exporter</artifactId>
-    <version>0.0.1</version>
+    <version>0.1</version>
     <name>redis-sentinel-exporter</name>
     <description>redis-sentinel-exporter for prom</description>
     <properties>
@@ -45,7 +45,6 @@
     </dependencies>
 
     <build>
-        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
