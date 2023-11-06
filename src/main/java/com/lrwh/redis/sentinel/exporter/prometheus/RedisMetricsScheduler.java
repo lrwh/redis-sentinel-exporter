@@ -3,6 +3,7 @@ package com.lrwh.redis.sentinel.exporter.prometheus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisSentinelConnection;
 import org.springframework.data.redis.connection.RedisServer;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,15 +26,23 @@ public class RedisMetricsScheduler {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    private static RedisSentinelConnection connection;
+
+
+
     @PostConstruct
     @Scheduled(cron = "${cron}")
     public void initRedis() {
-        for (RedisServer master : redisTemplate.getConnectionFactory().getSentinelConnection().masters()) {
+        if (connection==null){
+            connection = redisTemplate.getConnectionFactory().getSentinelConnection();
+        }
+        for (RedisServer master : connection.masters()) {
             buildMaster(master);
         }
     }
 
     public void buildMaster(RedisServer master) {
+
         List<String> tags = new ArrayList<>();
         tags.add(master.getHost());
         tags.add(master.getPort().toString());
@@ -52,9 +61,8 @@ public class RedisMetricsScheduler {
         MetricDefinition._redis_sentinel_known_sentinels.labels(master_tags).set(master.getNumberOtherSentinels()+1);
         MetricDefinition._redis_sentinel_link_pending_commands.labels(master_tags).set(Optional.ofNullable(master.getPendingCommands()).orElse(0L));
         MetricDefinition._redis_sentinel_cluster_type.labels(master_tags).set(Constants.NodeType.MASTER.v);
-
-        logger.info("master - {}:{},{},{},{}", master.getHost(), master.getPort(), master.getNumberSlaves(), master.getDownAfterMilliseconds(), master.getFlags());
-
+        MetricDefinition._redis_sentinel_node_state.labels(master_tags).set(1L);
+        logger.info("master - {}:{},{},{},{}", master.getHost(), master.getPort(), master.getNumberSlaves(), master.getNumberOtherSentinels(), master.getFlags());
         buildSlaves(master,master_tags);
     }
 
@@ -62,7 +70,7 @@ public class RedisMetricsScheduler {
         long slaves_odown = 0L;
         long slaves_sdown = 0L;
 
-        Collection<RedisServer> slaves = redisTemplate.getConnectionFactory().getSentinelConnection().slaves(master);
+        Collection<RedisServer> slaves = connection.slaves(master);
         for (RedisServer redisServer : slaves) {
             List<String> tags = new ArrayList<>();
             tags.add(redisServer.getHost());
@@ -71,12 +79,18 @@ public class RedisMetricsScheduler {
             String[] slave_tags = tags.stream().toArray(String[]::new);
 
             String flags = redisServer.getFlags();
+
+
             if (flags.contains("s_down")) {
                 slaves_sdown += 1L;
-                continue;
             } else if (flags.contains("is_odown")) {
                 slaves_odown += 1L;
-                continue;
+            }
+
+            if (flags.contains("disconnected")){
+                MetricDefinition._redis_sentinel_node_state.labels(slave_tags).set(0L);
+            }else{
+                MetricDefinition._redis_sentinel_node_state.labels(slave_tags).set(1L);
             }
 
             logger.info("slaves - {}:{},{},{}", redisServer.getHost(), redisServer.getPort(), redisServer.getDownAfterMilliseconds(), redisServer.getFlags());

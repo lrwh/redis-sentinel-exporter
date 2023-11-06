@@ -17,6 +17,11 @@ public class MetricDefinition {
             .help("number of slaves detected Shown as instance")
             .labelNames("ip","port","redis_cluster_name")
             .register();
+    public static final Gauge _redis_sentinel_node_state = Gauge.build()
+            .name("redis_sentinel_node_state")
+            .help("nodes state for master and slave")
+            .labelNames("ip","port","redis_cluster_name")
+            .register();
     public static final Gauge _redis_sentinel_link_pending_commands = Gauge.build()
             .name("redis_sentinel_link_pending_commands")
             .help("number of pending sentinel commands.Shown as command")

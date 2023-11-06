@@ -25,7 +25,7 @@ cron: "*/3 * * * * ?"
 ## 指标定义
 
 | 指标                                   | 含义             | 类型    |
-| ------------------------------------ | -------------- | ----- |
+| ------------------------------------ |----------------| ----- |
 | redis_sentinel_known_sentinels       | sentinels实例数   | Gauge |
 | redis_sentinel_known_slaves          | 集群slaves实例数    | Gauge |
 | redis_sentinel_cluster_type          | 集群节点类型         | Gauge |
@@ -35,7 +35,7 @@ cron: "*/3 * * * * ?"
 | redis_sentinel_ok_slaves             | 正在运行的slave数    | Gauge |
 | redis_sentinel_ping_latency          | 哨兵ping的延迟显示为毫秒 | Gauge |
 | redis_sentinel_last_ok_ping_latency  | 哨兵ping成功的秒数    | Gauge |
-
+| redis_sentinel_node_state  | redis 节点状态     | Gauge |
 
 
 
